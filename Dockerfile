@@ -2,9 +2,15 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Configure npm for faster installs
+RUN npm config set registry https://registry.npmjs.org/ && \
+    npm config set fetch-retries 3 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000
+
 # Install dependencies
 COPY package*.json ./
-RUN npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps --prefer-offline --no-audit
 
 # Copy source code
 COPY . .
