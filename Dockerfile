@@ -22,7 +22,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies with legacy peer deps
+# Install ALL dependencies (including devDependencies for build)
 RUN npm config set fetch-retries 3 && \
     npm config set fetch-retry-mintimeout 20000 && \
     npm config set fetch-retry-maxtimeout 120000 && \
@@ -34,8 +34,14 @@ RUN npx prisma generate
 # Copy source code
 COPY . .
 
-# Build application
-RUN npm run build
+# Build application with verbose output
+RUN echo "Starting build..." && \
+    npm run build && \
+    echo "Build completed. Checking dist folder..." && \
+    ls -la dist/ && \
+    echo "Checking for main.js..." && \
+    test -f dist/main.js && echo "✓ dist/main.js exists" || (echo "✗ ERROR: dist/main.js not found!" && ls -la && exit 1) && \
+    echo "Build verification successful!"
 
 # Create storage directory
 RUN mkdir -p /app/storage/invoices
