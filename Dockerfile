@@ -55,5 +55,5 @@ EXPOSE ${PORT:-3001}
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:${PORT:-3001}/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Start the application (check both possible locations)
-CMD ["sh", "-c", "if [ -f dist/src/main.js ]; then node dist/src/main.js; elif [ -f dist/main.js ]; then node dist/main.js; else echo 'ERROR: main.js not found!' && find dist -name 'main.js' && exit 1; fi"]
+# Start the application - find main.js automatically
+CMD ["sh", "-c", "MAIN_FILE=$(find /app/dist -name 'main.js' -type f | head -1) && if [ -n \"$MAIN_FILE\" ]; then echo \"Starting application from: $MAIN_FILE\" && node \"$MAIN_FILE\"; else echo 'ERROR: main.js not found in dist folder!' && echo 'Contents of /app/dist:' && ls -laR /app/dist/ && exit 1; fi"]
