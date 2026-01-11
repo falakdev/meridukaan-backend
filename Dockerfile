@@ -1,4 +1,5 @@
 # Multi-stage build for Railway
+# Updated: Force fresh build cache
 FROM node:20-alpine AS base
 
 # Install Chromium dependencies for Puppeteer
