@@ -6,10 +6,9 @@ dist
 .env
 .env.local
 coverage
-.nyc_output
-*.md
 .vscode
 .idea
+*.log
+.DS_Store
 storage
-prisma/migrations
-
+*.tsbuildinfo
