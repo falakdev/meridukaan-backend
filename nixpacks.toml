@@ -24,7 +24,7 @@ cmds = [
 ]
 
 [start]
-cmd = "npx prisma migrate deploy && node dist/src/main.js"
+cmd = "npx prisma migrate deploy && npx prisma db seed && node dist/src/main.js"
 
 [variables]
 NODE_ENV = "production"

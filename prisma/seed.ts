@@ -6,17 +6,31 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting seed...');
 
-  // Clear existing data (for development)
-  await prisma.invoiceItem.deleteMany();
-  await prisma.invoice.deleteMany();
-  await prisma.inventoryMovement.deleteMany();
-  await prisma.inventory.deleteMany();
-  await prisma.user.deleteMany();
-  await prisma.product.deleteMany();
-  await prisma.brand.deleteMany();
-  await prisma.manufacturer.deleteMany();
-  await prisma.category.deleteMany();
-  await prisma.store.deleteMany();
+  // Check if seed has already been run (idempotent check)
+  const existingUser = await prisma.user.findFirst({
+    where: { email: 'admin@meridukaan.com' },
+  });
+
+  if (existingUser) {
+    console.log('✅ Seed data already exists. Skipping seed...');
+    console.log('💡 To re-seed, delete existing data first or set FORCE_SEED=true');
+    return;
+  }
+
+  // Clear existing data (for development or when FORCE_SEED=true)
+  if (process.env.FORCE_SEED === 'true') {
+    console.log('🔄 Force seed enabled - clearing existing data...');
+    await prisma.invoiceItem.deleteMany();
+    await prisma.invoice.deleteMany();
+    await prisma.inventoryMovement.deleteMany();
+    await prisma.inventory.deleteMany();
+    await prisma.user.deleteMany();
+    await prisma.product.deleteMany();
+    await prisma.brand.deleteMany();
+    await prisma.manufacturer.deleteMany();
+    await prisma.category.deleteMany();
+    await prisma.store.deleteMany();
+  }
 
   // Create regions and stores (Pakistan)
   const stores = await Promise.all([
