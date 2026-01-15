@@ -1,18 +1,23 @@
 [phases.setup]
-nixPkgs = ["nodejs-20_x"]
+nixPkgs = ["nodejs-20_x", "chromium"]
 
 [phases.install]
 cmds = [
   "npm config set fetch-retries 3",
   "npm config set fetch-retry-mintimeout 20000",
   "npm config set fetch-retry-maxtimeout 120000",
-  "npm install --legacy-peer-deps --no-audit --no-optional --maxsockets 1",
-  "npm run prisma:generate"
+  "npm install --legacy-peer-deps --no-audit --no-optional --maxsockets 1"
 ]
 
 [phases.build]
-cmds = ["npm run build"]
+cmds = [
+  "npm run build",
+  "mkdir -p storage/invoices"
+]
 
 [start]
-cmd = "npm run start:prod"
+cmd = "node dist/main.js"
+
+[variables]
+PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
 

@@ -52,17 +52,26 @@ export class PdfService {
 
     let browser;
     try {
-      // Try to find Chrome executable on macOS
+      // Check for Puppeteer executable path from environment (Railway/Nixpacks)
+      const puppeteerExecutablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+      
+      // Try to find Chrome executable on macOS (local development)
       const chromePaths = [
         '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
         '/Applications/Chromium.app/Contents/MacOS/Chromium',
+        '/usr/bin/chromium',
+        '/usr/bin/chromium-browser',
       ];
       
-      let executablePath: string | undefined;
-      for (const chromePath of chromePaths) {
-        if (fs.existsSync(chromePath)) {
-          executablePath = chromePath;
-          break;
+      let executablePath: string | undefined = puppeteerExecutablePath;
+      
+      // If not set via env, try to find it locally
+      if (!executablePath) {
+        for (const chromePath of chromePaths) {
+          if (fs.existsSync(chromePath)) {
+            executablePath = chromePath;
+            break;
+          }
         }
       }
 
@@ -82,7 +91,7 @@ export class PdfService {
 
       if (executablePath) {
         launchOptions.executablePath = executablePath;
-        this.logger.log(`Using Chrome at: ${executablePath}`);
+        this.logger.log(`Using Chrome/Chromium at: ${executablePath}`);
       }
 
       browser = await puppeteer.launch(launchOptions);
