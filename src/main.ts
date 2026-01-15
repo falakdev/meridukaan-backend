@@ -38,6 +38,9 @@ async function bootstrap() {
           login: `http://${req.headers.host}/auth/login`,
           signup: `http://${req.headers.host}/auth/signup`,
         },
+        stores: {
+          list: `http://${req.headers.host}/stores`,
+        },
         users: {
           list: `http://${req.headers.host}/users`,
           getById: `http://${req.headers.host}/users/:id`,
@@ -47,6 +50,7 @@ async function bootstrap() {
         pos: {
           scan: `http://${req.headers.host}/pos/scan`,
           createInvoice: `http://${req.headers.host}/pos/invoices`,
+          note: 'POS operations automatically use your assigned store (SALES users)',
         },
         admin: {
           filters: `http://${req.headers.host}/admin/filters`,
@@ -91,6 +95,7 @@ async function bootstrap() {
       'JWT-auth', // This name here is important for matching up with @ApiBearerAuth() in your controller!
     )
     .addTag('Authentication', 'User authentication endpoints')
+    .addTag('Stores', 'Store information endpoints')
     .addTag('Users', 'User management endpoints (ADMIN only)')
     .addTag('POS', 'Point of Sale operations')
     .addTag('Admin', 'Admin analytics and dashboard endpoints')

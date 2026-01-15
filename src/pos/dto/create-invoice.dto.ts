@@ -1,6 +1,6 @@
 import { IsArray, IsInt, IsOptional, IsString, IsUUID, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 class InvoiceItemDto {
   @ApiProperty({
@@ -21,19 +21,13 @@ class InvoiceItemDto {
 }
 
 export class CreateInvoiceDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: '4158f662-9e15-42ef-9c4e-345b9465693c',
-    description: 'Store UUID',
+    description: 'Store UUID (optional for ADMIN, automatically uses your assigned store for SALES users)',
   })
+  @IsOptional()
   @IsUUID()
-  storeId: string;
-
-  @ApiProperty({
-    example: 'e8e79c5a-016d-49ef-9186-7eb34583762e',
-    description: 'Worker UUID (must be SALES user)',
-  })
-  @IsUUID()
-  workerId: string;
+  storeId?: string;
 
   @ApiProperty({
     type: [InvoiceItemDto],

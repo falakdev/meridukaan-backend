@@ -54,7 +54,7 @@ export class PosService {
     };
   }
 
-  async createInvoice(createInvoiceDto: CreateInvoiceDto, idempotencyKey?: string) {
+  async createInvoice(createInvoiceDto: CreateInvoiceDto & { storeId: string; workerId: string }, idempotencyKey?: string) {
     // Check idempotency if key provided
     if (idempotencyKey) {
       const existing = await this.prisma.invoice.findFirst({

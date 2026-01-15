@@ -28,34 +28,89 @@ export class PosController {
 
   @Post('scan')
   @Roles(UserRole.SALES, UserRole.ADMIN)
-  @ApiOperation({ summary: 'Scan product QR code', description: 'Scan QR code (SKU) and get product details with available stock' })
+  @ApiOperation({ 
+    summary: 'Scan product QR code', 
+    description: 'Scan QR code (SKU) and get product details with available stock. Store ID is automatically taken from your assigned store (SALES users) or can be specified (ADMIN users).' 
+  })
   @ApiResponse({ status: 200, description: 'Product found' })
-  @ApiResponse({ status: 400, description: 'Invalid request' })
+  @ApiResponse({ status: 400, description: 'Invalid request or user not assigned to a store' })
   @ApiResponse({ status: 404, description: 'Product not found' })
   async scan(@Body() scanDto: ScanDto, @CurrentUser() user: any) {
-    return this.posService.scanProduct(scanDto.storeId, scanDto.qrValue);
+    // Determine storeId based on user role
+    let storeId: string;
+    
+    if (user.role === UserRole.SALES) {
+      // SALES users must use their assigned store
+      if (!user.storeId) {
+        throw new Error('User is not assigned to a store. Please contact administrator.');
+      }
+      storeId = user.storeId;
+    } else if (user.role === UserRole.ADMIN) {
+      // ADMIN can use their assigned store if they have one
+      // For now, ADMIN must have a storeId assigned (can be updated later to allow store selection)
+      if (!user.storeId) {
+        throw new Error('Store ID is required. ADMIN users must be assigned to a store or specify storeId.');
+      }
+      storeId = user.storeId;
+    } else {
+      throw new Error('Unauthorized: Only SALES and ADMIN users can scan products.');
+    }
+    
+    return this.posService.scanProduct(storeId, scanDto.qrValue);
   }
 
   @Post('invoices')
   @Roles(UserRole.SALES, UserRole.ADMIN)
   @ApiOperation({ 
     summary: 'Create invoice', 
-    description: 'Create a new invoice with items. This is a transactional operation that validates store, worker, locks inventory, checks stock, creates invoice, updates inventory, generates PDF, and emits WebSocket events.' 
+    description: 'Create a new invoice with items. Store ID is automatically taken from your assigned store (SALES users) or can be specified (ADMIN users). Worker ID is automatically set to your user ID.' 
   })
   @ApiResponse({ status: 201, description: 'Invoice created successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid request or insufficient stock' })
+  @ApiResponse({ status: 400, description: 'Invalid request, insufficient stock, or user not assigned to a store' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createInvoice(
     @Body() createInvoiceDto: CreateInvoiceDto,
     @Headers('idempotency-key') idempotencyKey: string,
     @CurrentUser() user: any,
   ) {
-    // Validate worker permissions
-    if (user.id !== createInvoiceDto.workerId && user.role !== UserRole.ADMIN) {
-      throw new Error('Unauthorized: Worker ID does not match current user');
+    // Determine storeId: use user's assigned store for SALES, or allow ADMIN to specify
+    let storeId: string;
+    
+    if (user.role === UserRole.SALES) {
+      // SALES users must use their assigned store
+      if (!user.storeId) {
+        throw new Error('User is not assigned to a store. Please contact administrator.');
+      }
+      storeId = user.storeId;
+      
+      // If storeId is provided in request, validate it matches user's store
+      if (createInvoiceDto.storeId && createInvoiceDto.storeId !== user.storeId) {
+        throw new Error('SALES users can only create invoices for their assigned store.');
+      }
+    } else if (user.role === UserRole.ADMIN) {
+      // ADMIN can specify storeId or use their assigned store if they have one
+      if (createInvoiceDto.storeId) {
+        storeId = createInvoiceDto.storeId;
+      } else if (user.storeId) {
+        storeId = user.storeId;
+      } else {
+        throw new Error('Store ID is required. Please specify storeId in the request.');
+      }
+    } else {
+      throw new Error('Unauthorized: Only SALES and ADMIN users can create invoices.');
     }
 
-    return this.posService.createInvoice(createInvoiceDto, idempotencyKey);
+    // Worker ID is always the current user
+    const workerId = user.id;
+
+    // Create invoice DTO with determined values
+    const invoiceData = {
+      ...createInvoiceDto,
+      storeId,
+      workerId,
+    };
+
+    return this.posService.createInvoice(invoiceData, idempotencyKey);
   }
 
   @Get('invoices/:id')
