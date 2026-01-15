@@ -6,6 +6,7 @@ import { PosModule } from './pos/pos.module';
 import { AdminModule } from './admin/admin.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { WebSocketModule } from './websocket/websocket.module';
+import { UsersModule } from './users/users.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 
@@ -20,6 +21,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
     PosModule,
     AdminModule,
     WebSocketModule,
+    UsersModule,
   ],
   providers: [
     {

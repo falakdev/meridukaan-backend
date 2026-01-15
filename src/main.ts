@@ -38,6 +38,12 @@ async function bootstrap() {
           login: `http://${req.headers.host}/auth/login`,
           signup: `http://${req.headers.host}/auth/signup`,
         },
+        users: {
+          list: `http://${req.headers.host}/users`,
+          getById: `http://${req.headers.host}/users/:id`,
+          update: `http://${req.headers.host}/users/:id`,
+          delete: `http://${req.headers.host}/users/:id`,
+        },
         pos: {
           scan: `http://${req.headers.host}/pos/scan`,
           createInvoice: `http://${req.headers.host}/pos/invoices`,
@@ -85,6 +91,7 @@ async function bootstrap() {
       'JWT-auth', // This name here is important for matching up with @ApiBearerAuth() in your controller!
     )
     .addTag('Authentication', 'User authentication endpoints')
+    .addTag('Users', 'User management endpoints (ADMIN only)')
     .addTag('POS', 'Point of Sale operations')
     .addTag('Admin', 'Admin analytics and dashboard endpoints')
     .build();
