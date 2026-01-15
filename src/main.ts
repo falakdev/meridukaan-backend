@@ -36,6 +36,7 @@ async function bootstrap() {
         swagger: `http://${req.headers.host}/api-docs`,
         auth: {
           login: `http://${req.headers.host}/auth/login`,
+          signup: `http://${req.headers.host}/auth/signup`,
         },
         pos: {
           scan: `http://${req.headers.host}/pos/scan`,

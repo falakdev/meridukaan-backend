@@ -1,8 +1,10 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
+import { SignupDto } from './dto/signup.dto';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -47,6 +49,67 @@ export class AuthService {
         email: user.email,
         role: user.role,
         storeId: user.storeId,
+      },
+    };
+  }
+
+  async signup(signupDto: SignupDto) {
+    // Check if user already exists
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: signupDto.email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    // Validate storeId if role is SALES
+    if (signupDto.role === UserRole.SALES && !signupDto.storeId) {
+      throw new BadRequestException('Store ID is required for SALES role');
+    }
+
+    // Validate store exists if storeId is provided
+    if (signupDto.storeId) {
+      const store = await this.prisma.store.findUnique({
+        where: { id: signupDto.storeId },
+      });
+
+      if (!store) {
+        throw new BadRequestException('Store not found');
+      }
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(signupDto.password, 10);
+
+    // Create user
+    const user = await this.prisma.user.create({
+      data: {
+        email: signupDto.email,
+        passwordHash,
+        role: signupDto.role,
+        storeId: signupDto.storeId,
+      },
+      include: { store: true },
+    });
+
+    // Generate JWT token (same as login)
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      storeId: user.storeId,
+    };
+
+    const { passwordHash: _, ...userWithoutPassword } = user;
+
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: {
+        id: userWithoutPassword.id,
+        email: userWithoutPassword.email,
+        role: userWithoutPassword.role,
+        storeId: userWithoutPassword.storeId,
       },
     };
   }

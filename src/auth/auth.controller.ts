@@ -1,7 +1,8 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { SignupDto } from './dto/signup.dto';
 import { Public } from '../common/decorators/public.decorator';
 
 @ApiTags('Authentication')
@@ -16,6 +17,41 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
+  }
+
+  @Public()
+  @Post('signup')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ 
+    summary: 'User signup', 
+    description: 'Create a new user account and receive JWT token. Store ID is required for SALES role.' 
+  })
+  @ApiResponse({ 
+    status: 201, 
+    description: 'User created successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        access_token: {
+          type: 'string',
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        },
+        user: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', example: '4158f662-9e15-42ef-9c4e-345b9465693c' },
+            email: { type: 'string', example: 'newuser@meridukaan.com' },
+            role: { type: 'string', enum: ['ADMIN', 'SALES', 'INVENTORY', 'PURCHASE'], example: 'SALES' },
+            storeId: { type: 'string', nullable: true, example: '4158f662-9e15-42ef-9c4e-345b9465693c' }
+          }
+        }
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Bad request - Invalid input or store ID required for SALES role' })
+  @ApiResponse({ status: 409, description: 'Conflict - User with this email already exists' })
+  async signup(@Body() signupDto: SignupDto) {
+    return this.authService.signup(signupDto);
   }
 }
 
